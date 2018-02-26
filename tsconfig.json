@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES5",
+    "lib": [ "ES5", "ES6", "ES2015", "DOM" ],
+    "module": "commonjs",
+    "jsx": "react",
+    "outDir": "./lib",
+    "sourceMap": true,
+    "listFiles": false,
+    "listEmittedFiles": false,
+    "pretty": true,
+    "traceResolution": false,
+    "declaration": true,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "downlevelIteration": true,
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
+  },
+  "include": [
+    "./src/**/*.ts",
+    "./typings/**/*.d.ts"
+  ],
+  "exclude": [
+    "./node_modules",
+    "**/__tests__/**"
+  ]
+}

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <link rel="stylesheet" href="https://unpkg.com/modern-normalize@0.4.0/modern-normalize.css" />
+</head>
+<body>
+<div id="⚛️"></div>
+<script src="https://unpkg.com/react@16.0.0/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@16.0.0/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
+<script src="https://unpkg.com/styled-components@3.1.6/dist/styled-components.min.js"></script>
+<script src="https://unpkg.com/react-component-component@1.0.2/umd/react-component-component.min.js"></script>
+<script type="text/babel">
+const Component = ReactComponentComponent.default;
+
+const Space = styled.default.div`
+  padding: ${(props) => Math.max(props.size || 0, 1) * 4}px;
+`;
+
+const LabelText = styled.default.label`
+  margin: 0;
+  padding: 0;
+  color: #444444;
+`;
+const LabelWrapper = styled.default.div`
+  padding: 0 0 4px;
+  color: #444444;
+`;
+const Label = ({ text, children, ...props }) => (
+  <LabelWrapper {...props}>
+    <LabelText>{text}</LabelText>
+  </LabelWrapper>
+);
+
+const InputWrapper = styled.default.div`
+  padding: 0;
+`;
+const InputField = styled.default.input`
+  padding: 4px 8px;
+  border: 1px solid #444444;
+  border-radius: 2px;
+  width: 100%;
+  color: #444444;
+`;
+const Input = ({ label, children, ...props }) => (
+  <InputWrapper>
+    <Label text={label} />
+    <div>
+      <InputField {...props} />
+    </div>
+  </InputWrapper>
+);
+
+const CheckboxWrapper = styled.default.div`
+  display: flex;
+  flex-flow: row nowrap;
+  padding: 0;
+`;
+const CheckboxField = styled.default.input`
+`;
+const CheckboxFieldWrapper = styled.default.div`
+  flex: 0 0 auto;
+`;
+const CheckboxLabelWrapper = styled.default.div`
+  flex: 1 1 auto;
+  padding: 0 0 0 8px;
+`;
+const Checkbox = ({ label, checked, children, ...props }) => (
+  <Component initialState={{ checked: !!checked }}>
+    {({ setState, state }) => {
+      const toggle = () => {
+        setState((state) => ({ checked: !state.checked }));
+      };
+      return (
+        <CheckboxWrapper>
+          <CheckboxFieldWrapper>
+            <CheckboxField {...props} type="checkbox" checked={state.checked} onClick={toggle} />
+          </CheckboxFieldWrapper>
+          <CheckboxLabelWrapper>
+            <Label text={label} onClick={toggle} />
+          </CheckboxLabelWrapper>
+        </CheckboxWrapper>
+      );
+    }}
+  </Component>
+);
+
+const Button = styled.default.button`
+  padding: 8px 24px;
+  border: 2px solid #333333;
+  border-radius: 4px;
+  color: #efefef;
+  background: #333333;
+`;
+
+const Select = ({ label, items, children, ...props }) => (
+  <InputWrapper>
+    <Label text={label} />
+    <div>{'TODO: Select from ' + JSON.stringify(items)}</div>
+  </InputWrapper>
+);
+
+const Form = styled.default.form`
+  margin: 0;
+  padding: 0;
+`;
+
+const AppWrapper = styled.default.div`
+  padding: 20px;
+`;
+const AppCenterWrapper = styled.default.div`
+  margin: 0 auto;
+  width: 400px;
+`;
+const Heading = styled.default.h1`
+  text-align: center;
+`;
+const SubmitWrapper = styled.default.div`
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-end;
+`;
+const App = () => {
+  return (
+    <AppWrapper>
+      <AppCenterWrapper>
+        <Heading>Test Signup Form</Heading>
+        <Form
+          onSubmit={(event) => {
+            event.preventDefault();
+          }}
+        >
+          <Input label={'First Name'} type="text" />
+          <Space />
+          <Input label={'Last Name'} type="text" />
+          <Space />
+          <Input label={'Phone'} type="text" />
+          <Space />
+          <Input label={'Email Address'} type="text" />
+          <Space />
+          <Input label={'Password'} type="password" />
+          <Space size={2} />
+          <Select
+            label={'How did you hear about us?'}
+            items={[
+              { label: 'Twitter', value: 'TWITTER' },
+              { label: 'LinkedIn', value: 'LINKEDIN' },
+              { label: 'Other', value: 'OTHER' },
+            ]}
+          />
+          <Space size={2} />
+          <Checkbox label={'I agree with the Terms and Conditions'} />
+          <Space size={2} />
+          <SubmitWrapper>
+            <Button type="submit">{'Continue'}</Button>
+          </SubmitWrapper>
+        </Form>
+      </AppCenterWrapper>
+    </AppWrapper>
+  );
+};
+ReactDOM.render(<App />, document.getElementById('⚛️'));
+</script>
+</body>
+</html>
