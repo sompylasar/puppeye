@@ -17,6 +17,7 @@
   "scripts": {
     "test": "yarn clean && jest --forceExit",
     "test:watch": "yarn clean && jest -o --watch",
+    "test:debug": "yarn clean && WITH_DEBUG_OVERLAYS=1 WITH_DEBUG_DELAYS=1 jest --forceExit",
     "build": "tsc",
     "clean": "rimraf ./lib ./screenshot-*"
   },
