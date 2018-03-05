@@ -1,7 +1,7 @@
 import * as puppeteer from 'puppeteer';
 import * as createDebug from 'debug';
 
-const debug = createDebug('puppeteerUtils');
+const debug = createDebug('puppeye');
 
 export type Brand<K, T> = K & { __brand: T };
 
@@ -248,7 +248,7 @@ export function calcRectDistance(a: TRect, b: TRect): number {
 }
 
 const debug_convertPagePointToViewportPoint = createDebug(
-  'puppeteerUtils:convertPagePointToViewportPoint',
+  debug.namespace + ':convertPagePointToViewportPoint',
 );
 export function convertPagePointToViewportPoint(
   pageModel: TPageModel,
@@ -308,7 +308,7 @@ function getColorForPageElementsVersion(version: number) {
   return colors[version % colors.length];
 }
 
-export async function addMouseCursorOverlay(pageModel: TPageModel): Promise<void> {
+export async function addPointersOverlay(pageModel: TPageModel): Promise<void> {
   await pageModel.page.evaluate(
     (
       mouseViewportPoint: TViewportPoint,
@@ -316,12 +316,12 @@ export async function addMouseCursorOverlay(pageModel: TPageModel): Promise<void
       WITH_DEBUG_OVERLAYS: boolean,
     ) => {
       const container = document.createElement('div');
-      container.classList.add('__puppeteer_mouse_container__');
-      const box = document.createElement('div');
-      box.classList.add('__puppeteer_mouse__');
+      container.classList.add('__puppeye__pointersOverlay');
+      const mousePointer = document.createElement('div');
+      mousePointer.classList.add('__puppeye__pointer');
       const styleElement = document.createElement('style');
       styleElement.innerHTML = `
-  .__puppeteer_mouse_container__ {
+  .__puppeye__pointersOverlay {
     position: fixed;
     left: 0;
     top: 0;
@@ -333,7 +333,7 @@ export async function addMouseCursorOverlay(pageModel: TPageModel): Promise<void
     pointer-events: none;
     overflow: hidden;
   }
-  .__puppeteer_mouse__ {
+  .__puppeye__pointer {
     pointer-events: none;
     position: absolute;
     top: 0;
@@ -352,44 +352,49 @@ export async function addMouseCursorOverlay(pageModel: TPageModel): Promise<void
     color: #000000;
     text-shadow: 1px 1px 2px #ffffff;
   }
-  .__puppeteer_mouse__.button-1 {
+  .__puppeye__pointer.__puppeye__button-1 {
     transition: none;
     background: rgba(0,0,0,0.9);
   }
-  .__puppeteer_mouse__.button-2 {
+  .__puppeye__pointer.__puppeye__button-2 {
     transition: none;
     border-color: rgba(0,0,255,0.9);
   }
-  .__puppeteer_mouse__.button-3 {
+  .__puppeye__pointer.__puppeye__button-3 {
     transition: none;
     border-radius: 4px;
   }
-  .__puppeteer_mouse__.button-4 {
+  .__puppeye__pointer.__puppeye__button-4 {
     transition: none;
     border-color: rgba(255,0,0,0.9);
   }
-  .__puppeteer_mouse__.button-5 {
+  .__puppeye__pointer.__puppeye__button-5 {
     transition: none;
     border-color: rgba(0,255,0,0.9);
   }
   `;
-      function updateCoords(viewportPoint: TViewportPoint, pagePoint: TPagePoint) {
-        box.style.left = `${viewportPoint.x}px`;
-        box.style.top = `${viewportPoint.y}px`;
+      function updateCoords(
+        pointer: HTMLElement,
+        viewportPoint: TViewportPoint,
+        pagePoint: TPagePoint,
+      ) {
+        pointer.style.left = `${viewportPoint.x}px`;
+        pointer.style.top = `${viewportPoint.y}px`;
         if (WITH_DEBUG_OVERLAYS) {
-          box.innerText =
+          pointer.innerText =
             `${viewportPoint.x.toFixed(4)};${viewportPoint.y.toFixed(4)}` +
             `|${pagePoint.x.toFixed(4)};${pagePoint.y.toFixed(4)}`;
         }
       }
-      function updateButtons(buttons: number) {
+      function updateButtons(pointer: HTMLElement, buttons: number) {
         for (let i = 0; i < 5; i++) {
-          box.classList.toggle('button-' + i, Boolean(buttons & (1 << i)));
+          pointer.classList.toggle('__puppeye__button-' + i, Boolean(buttons & (1 << i)));
         }
       }
-      window.__puppeteer_mouse_updatecoords__ = updateCoords;
+      window.__puppeye__mousePointer = mousePointer;
+      window.__puppeye__updateCoords = updateCoords;
       document.head.appendChild(styleElement);
-      container.appendChild(box);
+      container.appendChild(mousePointer);
       document.body.appendChild(container);
       document.addEventListener(
         'mousemove',
@@ -402,42 +407,45 @@ export async function addMouseCursorOverlay(pageModel: TPageModel): Promise<void
             x: event.clientX,
             y: event.clientY,
           } as TViewportPoint;
-          updateCoords(viewportPoint, pagePoint);
-          updateButtons(event.buttons);
+          updateCoords(mousePointer, viewportPoint, pagePoint);
+          updateButtons(mousePointer, event.buttons);
         },
         true,
       );
       document.addEventListener(
         'mousedown',
         (event) => {
-          updateButtons(event.buttons);
-          box.classList.add('button-' + event.which);
+          updateButtons(mousePointer, event.buttons);
+          mousePointer.classList.add('__puppeye__button-' + event.which);
         },
         true,
       );
       document.addEventListener(
         'mouseup',
         (event) => {
-          updateButtons(event.buttons);
-          box.classList.remove('button-' + event.which);
+          updateButtons(mousePointer, event.buttons);
+          mousePointer.classList.remove('__puppeye__button-' + event.which);
         },
         true,
       );
-      updateCoords(mouseViewportPoint, mousePagePoint);
+      updateCoords(mousePointer, mouseViewportPoint, mousePagePoint);
     },
     pageModel.mouseViewportPoint,
     pageModel.mousePagePoint,
-    pageModel.pageScrollPagePoint,
     !!process.env.WITH_DEBUG_OVERLAYS,
   );
 }
 
-export async function renderMouseCursor(pageModel: TPageModel): Promise<void> {
+export async function renderPointers(pageModel: TPageModel): Promise<void> {
   await pageModel.page.evaluate(
-    (mouseViewportPoint: TViewportPoint, mousePagePoint: TPagePoint) => {
-      const updateCoords = window.__puppeteer_mouse_updatecoords__;
-      if (updateCoords) {
-        updateCoords(mouseViewportPoint, mousePagePoint);
+    (
+      mouseViewportPoint: TViewportPoint,
+      mousePagePoint: TPagePoint,
+    ) => {
+      const mousePointer = window.__puppeye__mousePointer;
+      const updateCoords = window.__puppeye__updateCoords;
+      if (updateCoords && mousePointer) {
+        updateCoords(mousePointer, mouseViewportPoint, mousePagePoint);
       }
     },
     pageModel.mouseViewportPoint,
@@ -446,7 +454,7 @@ export async function renderMouseCursor(pageModel: TPageModel): Promise<void> {
 }
 
 export async function addPageElementsChangeObservers(pageModel: TPageModel): Promise<void> {
-  await pageModel.page.exposeFunction('__puppeteer_ondomchange__', async () => {
+  await pageModel.page.exposeFunction('__puppeye__onDomChange', async () => {
     try {
       await pageModel.update();
     } catch (ex) {
@@ -469,12 +477,12 @@ export async function addPageElementsChangeObservers(pageModel: TPageModel): Pro
         }
       };
     }
-    const handler = throttle(window.__puppeteer_ondomchange__, 20);
+    const handler = throttle(window.__puppeye__onDomChange, 20);
     const observers: MutationObserver[] = [];
     const rootEls = document.querySelectorAll('body > *');
     for (let i = 0; i < rootEls.length; ++i) {
       const rootEl = rootEls.item(i);
-      if (/^__puppeteer_/.test(rootEl.className)) {
+      if (/^__puppeye__/.test(rootEl.className)) {
         continue;
       }
       const observer = new MutationObserver(handler);
@@ -508,7 +516,7 @@ async function addPageElementsOverlay(pageModel: TPageModel): Promise<void> {
   await pageModel.page.evaluate(() => {
     const styleElement = document.createElement('style');
     styleElement.innerHTML = `
-  .__puppeteer_boxes_container__ {
+  .__puppeye__pageElementsOverlay {
     position: fixed;
     left: 0;
     top: 0;
@@ -520,7 +528,7 @@ async function addPageElementsOverlay(pageModel: TPageModel): Promise<void> {
     pointer-events: none;
     overflow: hidden;
   }
-  .__puppeteer_box__ {
+  .__puppeye__pageElement {
     position: absolute;
     pointer-events: none;
     border: 1px solid transparent;
@@ -543,11 +551,11 @@ async function renderPageElementsScan(
   if (process.env.WITH_DEBUG_OVERLAYS) {
     await pageModel.page.evaluate(
       (pageElements: TPageElement[], color: string) => {
-        if (!document.querySelector('[__puppeteer_boxes_css__]')) {
+        if (!document.querySelector('[__puppeye__pageElementsStyles]')) {
           const styleElement = document.createElement('style');
-          styleElement.setAttribute('__puppeteer_boxes_css__', '1');
+          styleElement.setAttribute('__puppeye__pageElementsStyles', '1');
           styleElement.innerHTML = `
-  .__puppeteer_boxes__ {
+  .__puppeye__pageElements {
     position: fixed;
     left: 0;
     top: 0;
@@ -559,7 +567,7 @@ async function renderPageElementsScan(
     pointer-events: none;
     overflow: hidden;
   }
-  .__puppeteer_box__ {
+  .__puppeye__pageElement {
     position: absolute;
     pointer-events: none;
     border: 1px solid transparent;
@@ -573,16 +581,18 @@ async function renderPageElementsScan(
           document.head.appendChild(styleElement);
         }
 
-        const boxesExisting: HTMLElement | null = document.querySelector('.__puppeteer_boxes__');
+        const boxesExisting: HTMLElement | null = document.querySelector(
+          '.__puppeye__pageElements',
+        );
         if (boxesExisting && boxesExisting.parentNode) {
           boxesExisting.parentNode.removeChild(boxesExisting);
         }
         const boxes = document.createElement('div');
-        boxes.className = '__puppeteer_boxes__';
+        boxes.className = '__puppeye__pageElements';
         boxes.style.pointerEvents = 'none';
         pageElements.forEach(({ viewportRect, zIndex, text }, index) => {
           const box = document.createElement('div');
-          box.className = '__puppeteer_box__';
+          box.className = '__puppeye__pageElement';
           box.style.left = `${viewportRect.left}px`;
           box.style.top = `${viewportRect.top}px`;
           box.style.zIndex = `${index + 1}`;
@@ -742,14 +752,7 @@ export async function scanPageElements(pageModel: TPageModel): Promise<TPageElem
 
       let domDepthMax = 0;
       let pageElements: TPageElement[] = allNodes
-        .filter(
-          (el: HTMLElement): boolean =>
-            !(
-              el.classList.contains('__puppeteer_boxes__') ||
-              el.classList.contains('__puppeteer_box__') ||
-              el.classList.contains('__puppeteer_mouse__')
-            ),
-        )
+        .filter((el: HTMLElement): boolean => !/(^| )__puppeye__/.test(el.className))
         .map((el: HTMLElement): TPageElement | null => {
           const isImage = checkIsImage(el);
           const isInteractive = checkIsInteractive(el);
@@ -929,7 +932,7 @@ export function debugToStringElementContext(ctx: TPageElementContext): string {
   return log;
 }
 
-const debug_getElementContext = createDebug('puppeteerUtils:getElementContext');
+const debug_getElementContext = createDebug(debug.namespace + ':getElementContext');
 export function getElementContext(sourceElement: TPageElement): TPageElementContext {
   const pageElementsScan = sourceElement.pageElementsScanRef;
   let withContext = (pageElementsScan ? pageElementsScan.pageElements : [])
@@ -1033,7 +1036,9 @@ export function debugToStringElementContextSimilarity(similarity: TPageElementCo
   return log;
 }
 
-const debug_getElementContextSimilarity = createDebug('puppeteerUtils:getElementContextSimilarity');
+const debug_getElementContextSimilarity = createDebug(
+  debug.namespace + ':getElementContextSimilarity',
+);
 export function getElementContextSimilarity(
   aa: TPageElementContext,
   bb: TPageElementContext,
@@ -1119,7 +1124,7 @@ export async function makePageModel(browserModel: TBrowserModel, url: string): P
       this.mousePagePoint = await convertViewportPointToPagePoint(this, this.mouseViewportPoint);
       this.pageElementsScan = await scanPageElements(this);
       await renderPageElementsScan(this, this.pageElementsScan);
-      await renderMouseCursor(this);
+      await renderPointers(this);
     },
   };
   await pageModel.page.setViewport({
@@ -1129,7 +1134,7 @@ export async function makePageModel(browserModel: TBrowserModel, url: string): P
   await pageModel.page.goto(url);
   await pageModel.page.bringToFront();
   await addPageElementsOverlay(pageModel);
-  await addMouseCursorOverlay(pageModel);
+  await addPointersOverlay(pageModel);
   await addPageElementsChangeObservers(pageModel);
   await pageModel.update();
   return pageModel;
@@ -1144,7 +1149,7 @@ export function findElements(pageModel: TPageModel, finder: TPageElementsFinder)
   return pageElements;
 }
 
-const debug_findElementAgain = createDebug('puppeteerUtils:findElementAgain');
+const debug_findElementAgain = createDebug(debug.namespace + ':findElementAgain');
 export function findElementAgain(pageModel: TPageModel, sourceElement: TPageElement): TPageElement {
   let candidates: {
     pageElement: TPageElement;
@@ -1281,7 +1286,7 @@ export function makeElementsAroundFinder(inputs: {
   return finder;
 }
 
-const debug_makeElementsBelowFinder = createDebug('puppeteerUtils:makeElementsBelowFinder');
+const debug_makeElementsBelowFinder = createDebug(debug.namespace + ':makeElementsBelowFinder');
 export function makeElementsBelowFinder(inputs: {
   viewportPoint: TViewportPoint;
   filter: TPageElementsFilter;
@@ -1444,7 +1449,7 @@ export async function getScrollInfo(pageModel: TPageModel): Promise<TScrollInfo>
   });
 }
 
-const debug_scrollAtViewportPoint = createDebug('puppeteerUtils:scrollAtViewportPoint');
+const debug_scrollAtViewportPoint = createDebug(debug.namespace + ':scrollAtViewportPoint');
 export async function scrollAtViewportPoint(
   pageModel: TPageModel,
   viewportPoint: TViewportPoint,
@@ -1489,7 +1494,7 @@ export async function scrollAtViewportPoint(
   return scrolledDistance > 1;
 }
 
-const debug_moveMouseIntoElementRect = createDebug('puppeteerUtils:moveMouseIntoElementRect');
+const debug_moveMouseIntoElementRect = createDebug(debug.namespace + ':moveMouseIntoElementRect');
 export async function moveMouseIntoElementRect(pageModel: TPageModel, element: TPageElement) {
   const elementBeforeMouseMove = findElementAgain(pageModel, element);
   const viewportRect = elementBeforeMouseMove.viewportRect;
@@ -1587,7 +1592,7 @@ export async function findElementsWithWaiting(
   }
 }
 
-const debug_findElementsWithScrolling = createDebug('puppeteerUtils:findElementsWithScrolling');
+const debug_findElementsWithScrolling = createDebug(debug.namespace + ':findElementsWithScrolling');
 export async function findElementsWithScrolling(
   pageModel: TPageModel,
   findElementsWithBoundFinder: (pageModel: TPageModel) => TPageElement[],
@@ -1722,7 +1727,7 @@ export async function fillOutInput(
   await pageModel.page.keyboard.type(value);
 }
 
-const debug_clickElement = createDebug('puppeteerUtils:clickElement');
+const debug_clickElement = createDebug(debug.namespace + ':clickElement');
 export async function clickElement(pageModel: TPageModel, element: TPageElement) {
   debug_clickElement(debugToStringElement(element));
 

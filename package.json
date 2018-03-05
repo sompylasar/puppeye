@@ -23,7 +23,9 @@
   },
   "jest": {
     "verbose": true,
-    "testRegex": "/__tests__/([^/]+/)*.*\\.(test|spec)\\.(jsx?|tsx?)$",
+    "testMatch": [
+      "<rootDir>/test/**/*.(test|spec).(js|ts)?(x)"
+    ],
     "transform": {
       "^.+\\.(js|jsx|ts|tsx)$": "ts-jest"
     },

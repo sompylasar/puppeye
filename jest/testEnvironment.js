@@ -21,7 +21,7 @@ class PuppeteerTestNodeEnvironment extends NodeEnvironment {
   async setup() {
     await super.setup();
 
-    this.global.__ppt = async (inputs) => {
+    this.global.__getPuppeteerBrowser = async (inputs) => {
       if (this._teardown) {
         throw new Error('Requested a new browser instance during teardown.');
       }
