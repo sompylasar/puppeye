@@ -1,5 +1,5 @@
 import * as puppeteer from 'puppeteer';
-import { TBrowserModel, TViewportPoint, TDimensions, TPagePoint } from '../src/index';
+import { TBrowserModel, TViewportPoint, TDimensions, TPagePoint, TPageState } from '../src/types';
 
 declare global {
   const __getPuppeteerBrowser: (
@@ -10,11 +10,8 @@ declare global {
   ) => TBrowserModel;
 
   interface Window {
-    __puppeye__onDomChange: () => void | undefined;
-    __puppeye__mousePointer: HTMLElement | undefined;
-    __puppeye__updateCoords:
-      | ((pointer: HTMLElement, viewportPoint: TViewportPoint, pagePoint: TPagePoint) => void)
-      | undefined;
+    __puppeye__onNewState: undefined | ((pageState: TPageState) => void);
+    __puppeye__state: undefined | TPageState;
   }
 }
 

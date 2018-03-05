@@ -50,7 +50,7 @@ const Input = ({ label, children, ...props }) => (
   <InputWrapper>
     <Label text={label} />
     <div>
-      <InputField {...props} />
+      <InputField {...props} data-test-label={label} />
     </div>
   </InputWrapper>
 );
@@ -78,7 +78,13 @@ const Checkbox = ({ label, checked, children, ...props }) => (
       return (
         <CheckboxWrapper>
           <CheckboxFieldWrapper>
-            <CheckboxField {...props} type="checkbox" checked={state.checked} onClick={toggle} />
+            <CheckboxField
+              {...props}
+              type="checkbox"
+              checked={state.checked}
+              onClick={toggle}
+              data-test-label={label}
+            />
           </CheckboxFieldWrapper>
           <CheckboxLabelWrapper>
             <Label text={label} onClick={toggle} />
@@ -106,6 +112,8 @@ const SelectInput = styled.default.select`
   border-radius: 4px;
   color: #444444;
   background: #ffffff;
+
+  ${(props) => (props.value === '' ? `color: #acacac;` : '')}
 `;
 
 const SelectInputOption = styled.default.option`
@@ -115,17 +123,26 @@ const SelectInputOption = styled.default.option`
   background: #efefef;
 `;
 
-const Select = ({ label, items, children, ...props }) => (
-  <Component initialState={{ selected: undefined }}>
+const Select = ({ label, placeholder, items, children, ...props }) => (
+  <Component initialState={{ focused: false, selected: '' }}>
     {({ setState, state }) => {
       const onChange = (event) => {
         const value = event.target.value;
         setState((state) => ({ selected: value }));
       };
+      const onFocus = () => {
+        setState((state) => ({ focused: true }));
+      };
+      const onBlur = () => {
+        setState((state) => ({ focused: false }));
+      };
       return (
         <InputWrapper>
           <Label text={label} />
-          <SelectInput value={state.selected} onChange={onChange}>
+          <SelectInput value={state.selected} onChange={onChange} onFocus={onFocus} onBlur={onBlur}>
+            <SelectInputOption value={''} disabled={state.focused}>
+              {placeholder}
+            </SelectInputOption>
             {items.map((item) => (
               <SelectInputOption value={item.value} key={item.value}>
                 {item.label}
@@ -180,6 +197,7 @@ const App = () => {
           <Space size={2} />
           <Select
             label={'How did you hear about us?'}
+            placeholder={'Select'}
             items={[
               { label: 'Twitter', value: 'TWITTER' },
               { label: 'LinkedIn', value: 'LINKEDIN' },
