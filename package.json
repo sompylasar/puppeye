@@ -63,7 +63,7 @@
     "jest-environment-node": "^22.1.4",
     "mkdirp": "^0.5.1",
     "prettier": "^1.10.2",
-    "puppeteer": "^1.0.0",
+    "puppeteer": "^1.13.0",
     "rimraf": "^2.6.2",
     "ts-jest": "^22.0.3",
     "typescript": "^2.7.1",
